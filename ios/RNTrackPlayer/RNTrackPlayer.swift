@@ -344,6 +344,41 @@ public class RNTrackPlayer: RCTEventEmitter {
         
         resolve(NSNull())
     }
+
+    @objc(initQueue:head:resolver:rejecter:)
+    public func initQueue(trackDicts: [[String: Any]], head trackId: String, resolve: RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) {        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            UIApplication.shared.beginReceivingRemoteControlEvents();
+        }
+
+        reset(resolve: { _ in }, reject: { _, _, _  in })
+
+        var tracks = [Track]()
+        for trackDict in trackDicts {
+            guard let track = Track(dictionary: trackDict) else {
+                reject("invalid_track_object", "Track is missing a required key", nil)
+                return
+            }
+            
+            tracks.append(track)
+        }
+        
+        print("Adding tracks:", tracks)
+
+        try? player.add(items: tracks, playWhenReady: false)
+
+        guard let trackIndex = player.queueManager.items.firstIndex(where: { ($0 as! Track).id == trackId })
+        else {
+            reject("track_not_in_queue", "Given track ID was not found in queue", nil)
+            return
+        }
+
+        print("Skipping to track:", trackId)
+        try? player.jumpToItem(atIndex: trackIndex, playWhenReady: false)
+        
+        
+        resolve(NSNull())
+    }
     
     @objc(remove:resolver:rejecter:)
     public func remove(tracks ids: [String], resolve: RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) {

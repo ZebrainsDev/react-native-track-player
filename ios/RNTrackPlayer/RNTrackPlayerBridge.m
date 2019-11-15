@@ -25,6 +25,11 @@ RCT_EXTERN_METHOD(add:(NSArray *)objects
                   before:(NSString *)trackId
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject);
+                                    
+RCT_EXTERN_METHOD(initQueue:(NSArray *)objects
+                  head:(NSString *)trackId
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject);
 
 RCT_EXTERN_METHOD(remove:(NSArray *)objects
                   resolver:(RCTPromiseResolveBlock)resolve
