@@ -36,9 +36,10 @@ class AVPlayerObserver: NSObject {
         static let timeControlStatus = #keyPath(AVPlayer.timeControlStatus)
     }
     
+
     private let statusChangeOptions: NSKeyValueObservingOptions = [.new, .initial]
     private let timeControlStatusChangeOptions: NSKeyValueObservingOptions = [.new]
-    private(set) var isObserving: Bool = false
+    var isObserving: Bool = false
     
     weak var delegate: AVPlayerObserverDelegate?
     weak var player: AVPlayer? {
@@ -65,12 +66,13 @@ class AVPlayerObserver: NSObject {
     }
     
     func stopObserving() {
-        guard let player = player, isObserving else {
+        guard let player = player, self.isObserving else {
             return
         }
         player.removeObserver(self, forKeyPath: AVPlayerKeyPath.status, context: &AVPlayerObserver.context)
         player.removeObserver(self, forKeyPath: AVPlayerKeyPath.timeControlStatus, context: &AVPlayerObserver.context)
         self.isObserving = false
+        
     }
     
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
@@ -105,6 +107,7 @@ class AVPlayerObserver: NSObject {
     }
     
     private func handleTimeControlStatusChange(_ change: [NSKeyValueChangeKey: Any]?) {
+        
         let status: AVPlayer.TimeControlStatus
         if let statusNumber = change?[.newKey] as? NSNumber {
             status = AVPlayer.TimeControlStatus(rawValue: statusNumber.intValue)!

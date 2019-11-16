@@ -10,8 +10,10 @@ import Foundation
 import AVFoundation
 
 protocol AVPlayerTimeObserverDelegate: class {
+    
     func audioDidStart()
     func timeEvent(time: CMTime)
+    
 }
 
 /**
@@ -46,11 +48,6 @@ class AVPlayerTimeObserver {
     
     init(periodicObserverTimeInterval: CMTime) {
         self.periodicObserverTimeInterval = periodicObserverTimeInterval
-    }
-    
-    deinit {
-        unregisterForPeriodicEvents()
-        unregisterForBoundaryTimeEvents()
     }
     
     /**
