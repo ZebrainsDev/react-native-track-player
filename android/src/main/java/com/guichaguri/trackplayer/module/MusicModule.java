@@ -226,6 +226,41 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
     }
 
     @ReactMethod
+    public void initQueue(ReadableArray tracks, final String headTrackId, final Promise callback) {
+        final ArrayList bundleList = Arguments.toList(tracks);
+
+        waitForConnection(() -> {
+            List<Track> trackList;
+
+            try {
+                trackList = Track.createTracks(getReactApplicationContext(), bundleList, binder.getRatingType());
+            } catch(Exception ex) {
+                callback.reject("invalid_track_object", ex);
+                return;
+            }
+
+
+            int index = -1;
+            for(int i = 0; i < trackList.size(); i++) {
+                if(trackList.get(i).id.equals(headTrackId)) {
+                    index = i;
+                    break;
+                }
+            }
+         
+            if(index == -1) {
+                callback.reject("track_not_in_queue", "Given track ID was not found in queue");
+            } else if(trackList == null || trackList.isEmpty()) {
+                callback.reject("invalid_track_object", "Track is missing a required key");
+            } else {
+                binder.getPlayback().reset();
+                binder.getPlayback().add(trackList, index, callback);
+                binder.getPlayback().skip(headTrackId, callback);
+            }
+        });
+    }
+
+    @ReactMethod
     public void remove(ReadableArray tracks, final Promise callback) {
         final ArrayList trackList = Arguments.toList(tracks);
 
