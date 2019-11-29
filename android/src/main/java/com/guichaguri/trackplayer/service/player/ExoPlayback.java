@@ -62,6 +62,8 @@ public abstract class ExoPlayback<T extends Player> implements EventListener, Me
 
     public abstract void add(Collection<Track> tracks, int index, Promise promise);
 
+    public abstract void initQueueWithOffset(Collection<Track> tracks, int index, Promise promise);
+
     public abstract void remove(List<Integer> indexes, Promise promise);
 
     public abstract void removeUpcomingTracks();
@@ -88,10 +90,7 @@ public abstract class ExoPlayback<T extends Player> implements EventListener, Me
 
         for(int i = 0; i < queue.size(); i++) {
             if(id.equals(queue.get(i).id)) {
-                lastKnownWindow = player.getCurrentWindowIndex();
-                lastKnownPosition = player.getCurrentPosition();
-
-                player.seekToDefaultPosition(i);
+                skip(i);
                 promise.resolve(null);
                 return;
             }
@@ -108,10 +107,7 @@ public abstract class ExoPlayback<T extends Player> implements EventListener, Me
             return;
         }
 
-        lastKnownWindow = player.getCurrentWindowIndex();
-        lastKnownPosition = player.getCurrentPosition();
-
-        player.seekToDefaultPosition(prev);
+        skip(prev);
         promise.resolve(null);
     }
 
@@ -123,11 +119,16 @@ public abstract class ExoPlayback<T extends Player> implements EventListener, Me
             return;
         }
 
+        skip(next);
+        promise.resolve(null);
+    }
+
+
+    protected void skip(int index) {
         lastKnownWindow = player.getCurrentWindowIndex();
         lastKnownPosition = player.getCurrentPosition();
 
-        player.seekToDefaultPosition(next);
-        promise.resolve(null);
+        player.seekToDefaultPosition(index);
     }
 
     public void play() {
