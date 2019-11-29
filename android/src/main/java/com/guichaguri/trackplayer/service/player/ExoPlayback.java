@@ -32,6 +32,7 @@ public abstract class ExoPlayback<T extends Player> implements EventListener, Me
     protected final Context context;
     protected final MusicManager manager;
     protected final T player;
+    protected boolean queueInitialized = false;
 
     protected List<Track> queue = Collections.synchronizedList(new ArrayList<>());
 
@@ -243,7 +244,7 @@ public abstract class ExoPlayback<T extends Player> implements EventListener, Me
     public void onPositionDiscontinuity(int reason) {
         Log.d(Utils.LOG, "onPositionDiscontinuity: " + reason);
 
-        if(lastKnownWindow != player.getCurrentWindowIndex()) {
+        if(queueInitialized && lastKnownWindow != player.getCurrentWindowIndex()) {
             Track previous = lastKnownWindow == C.INDEX_UNSET ? null : queue.get(lastKnownWindow);
             Track next = getCurrentTrack();
 
@@ -290,7 +291,7 @@ public abstract class ExoPlayback<T extends Player> implements EventListener, Me
     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
         int state = getState();
 
-        if(state != previousState) {
+        if(queueInitialized && state != previousState) {
             if(Utils.isPlaying(state) && !Utils.isPlaying(previousState)) {
                 manager.onPlay();
             } else if(Utils.isPaused(state) && !Utils.isPaused(previousState)) {

@@ -67,6 +67,7 @@ public class LocalPlayback extends ExoPlayback<SimpleExoPlayer> {
             Log.d(Utils.LOG, "Preparing the media source...");
             player.prepare(source, false, false);
             prepared = true;
+            queueInitialized = true;
         }
     }
 
@@ -154,6 +155,7 @@ public class LocalPlayback extends ExoPlayback<SimpleExoPlayer> {
 
         source = new ConcatenatingMediaSource();
         player.prepare(source, true, true);
+        queueInitialized = false;
         prepared = false; // We set it to false as the queue is now empty
 
         lastKnownWindow = C.INDEX_UNSET;
