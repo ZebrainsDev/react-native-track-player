@@ -104,11 +104,12 @@ public class LocalPlayback extends ExoPlayback<SimpleExoPlayer> {
 
         resetQueue();
         queue.addAll(tracks);
-        source.addMediaSources(0, trackList, manager.getHandler(), () -> {
-            skip(index);
-            prepare();
-            promise.resolve(null);
-        });
+        player.setPlayWhenReady(false);
+        source.addMediaSources(trackList);
+        skip(index);
+        prepare();
+        player.setPlayWhenReady(true);
+        promise.resolve(null);
 
     }
 

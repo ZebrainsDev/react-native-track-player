@@ -244,7 +244,7 @@ public abstract class ExoPlayback<T extends Player> implements EventListener, Me
     public void onPositionDiscontinuity(int reason) {
         Log.d(Utils.LOG, "onPositionDiscontinuity: " + reason);
 
-        if(queueInitialized && lastKnownWindow != player.getCurrentWindowIndex()) {
+        if(lastKnownWindow != player.getCurrentWindowIndex()) {
             Track previous = lastKnownWindow == C.INDEX_UNSET ? null : queue.get(lastKnownWindow);
             Track next = getCurrentTrack();
 
@@ -256,7 +256,13 @@ public abstract class ExoPlayback<T extends Player> implements EventListener, Me
                 if(duration != C.TIME_UNSET) lastKnownPosition = duration;
             }
 
-            manager.onTrackUpdate(previous, lastKnownPosition, next);
+            if(queueInitialized){
+                manager.onTrackUpdate(previous, lastKnownPosition, next);
+            } else {
+                manager.getMetadata().updateMetadata(next);
+            }
+
+
         }
 
         lastKnownWindow = player.getCurrentWindowIndex();
@@ -289,9 +295,13 @@ public abstract class ExoPlayback<T extends Player> implements EventListener, Me
 
     @Override
     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+        if(!queueInitialized){
+            return;
+        }
+
         int state = getState();
 
-        if(queueInitialized && state != previousState) {
+        if(state != previousState) {
             if(Utils.isPlaying(state) && !Utils.isPlaying(previousState)) {
                 manager.onPlay();
             } else if(Utils.isPaused(state) && !Utils.isPaused(previousState)) {
