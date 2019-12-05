@@ -258,8 +258,6 @@ public abstract class ExoPlayback<T extends Player> implements EventListener, Me
 
             if(queueInitialized){
                 manager.onTrackUpdate(previous, lastKnownPosition, next);
-            } else {
-                manager.getMetadata().updateMetadata(next);
             }
 
 

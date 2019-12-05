@@ -107,6 +107,8 @@ public class LocalPlayback extends ExoPlayback<SimpleExoPlayer> {
         player.setPlayWhenReady(false);
         source.addMediaSources(trackList);
         skip(index);
+        Track track = getCurrentTrack();
+        manager.getMetadata().updateMetadata(track);
         prepare();
         player.setPlayWhenReady(true);
         promise.resolve(null);
