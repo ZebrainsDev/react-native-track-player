@@ -305,7 +305,7 @@ public class RNTrackPlayer: RCTEventEmitter {
     }
     
     @objc(add:before:resolver:rejecter:)
-    public func add(trackDicts: [[String: Any]], before trackId: String?, resolve: RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) {        
+    public func add(trackDicts: [[String: Any]], before trackId: String?, resolve: RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             UIApplication.shared.beginReceivingRemoteControlEvents();
         }
@@ -346,7 +346,7 @@ public class RNTrackPlayer: RCTEventEmitter {
     }
 
     @objc(initQueue:head:resolver:rejecter:)
-    public func initQueue(trackDicts: [[String: Any]], head trackId: String, resolve: RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) {        
+    public func initQueue(trackDicts: [[String: Any]], head trackId: String, resolve: RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             UIApplication.shared.beginReceivingRemoteControlEvents();
         }
@@ -372,8 +372,12 @@ public class RNTrackPlayer: RCTEventEmitter {
             reject("track_not_in_queue", "Given track ID was not found in queue", nil)
             return
         }
+        
+        print("Enabling remote commands")
+        player.enableRemoteCommands([.play, .pause, .changePlaybackPosition], withClear: false)
+        
 
-        print("Skipping to track:", trackId)
+        print("Head to track:", trackId)
         try? player.jumpToItem(atIndex: trackIndex, playWhenReady: false)
         
         

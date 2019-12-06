@@ -122,6 +122,7 @@ public class QueuedAudioPlayer: AudioPlayer {
         event.playbackEnd.emit(data: .skippedToNext)
         let nextItem = try queueManager.next()
         try self.load(item: nextItem, playWhenReady: true)
+        checkForNextPrevCommands()
     }
     
     /**
@@ -131,6 +132,34 @@ public class QueuedAudioPlayer: AudioPlayer {
         event.playbackEnd.emit(data: .skippedToPrevious)
         let previousItem = try queueManager.previous()
         try self.load(item: previousItem, playWhenReady: true)
+        checkForNextPrevCommands()
+    }
+    
+    private var nextEnabled: Bool = false
+    private var previousEnabled: Bool = false
+    private func checkForNextPrevCommands () {
+        if queueManager.hasNextItems {
+            if !nextEnabled {
+                enableRemoteCommands([.next], withClear: false)
+                nextEnabled = true
+            }
+        } else {
+            if nextEnabled {
+                disableRemoteCommands([.next])
+                nextEnabled = false
+            }
+        }
+        if queueManager.hasPreviousItems {
+            if !previousEnabled{
+                enableRemoteCommands([.previous], withClear: false)
+                previousEnabled = true
+            }
+        } else {
+            if previousEnabled {
+                disableRemoteCommands([.previous])
+                previousEnabled = false
+            }
+        }
     }
     
     /**
@@ -154,6 +183,7 @@ public class QueuedAudioPlayer: AudioPlayer {
         event.playbackEnd.emit(data: .jumpedToIndex)
         let item = try queueManager.jump(to: index)
         try self.load(item: item, playWhenReady: playWhenReady)
+        checkForNextPrevCommands()
     }
     
     /**

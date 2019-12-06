@@ -19,15 +19,23 @@ class QueueManager<T> {
         return _items
     }
     
+    public var hasNextItems: Bool {
+        return _currentIndex + 1 < _items.count
+    }
+    
     public var nextItems: [T] {
-        guard _currentIndex + 1 < _items.count else {
+        guard hasNextItems else {
             return []
         }
         return Array(_items[_currentIndex + 1..<_items.count])
     }
     
+    public var hasPreviousItems: Bool {
+          return _currentIndex > 0
+      }
+    
     public var previousItems: [T] {
-        if (_currentIndex == 0) {
+        if hasPreviousItems {
             return []
         }
         return Array(_items[0..<_currentIndex])
@@ -130,10 +138,6 @@ class QueueManager<T> {
      */
     @discardableResult
     func jump(to index: Int) throws -> T {
-        guard index != currentIndex else {
-            throw APError.QueueError.invalidIndex(index: index, message: "Cannot jump to the current item")
-        }
-        
         guard index >= 0 && _items.count > index else {
             throw APError.QueueError.invalidIndex(index: index, message: "The jump index has to be positive and smaller thant the count of current items (\(_items.count))")
         }
@@ -209,9 +213,10 @@ class QueueManager<T> {
      If no previous items exist, no action will be taken.
      */
     public func removePreviousItems() {
-        guard currentIndex > 0 else { return }
-        _items.removeSubrange(0..<_currentIndex)
-        _currentIndex = 0
+        if hasPreviousItems {
+            _items.removeSubrange(0..<_currentIndex)
+            _currentIndex = 0
+        }
     }
 
     /**
@@ -219,9 +224,9 @@ class QueueManager<T> {
      If no upcoming items exist, no action will be taken.
      */
     public func removeUpcomingItems() {
-        let nextIndex = _currentIndex + 1
-        guard nextIndex < _items.count else { return }
-        _items.removeSubrange(nextIndex..<_items.count)
+        if hasNextItems {
+           _items.removeSubrange(_currentIndex + 1..<_items.count)
+        }
     }
     
     /**
