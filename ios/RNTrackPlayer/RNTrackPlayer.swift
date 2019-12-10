@@ -378,7 +378,7 @@ public class RNTrackPlayer: RCTEventEmitter {
         
 
         print("Head to track:", trackId)
-        try? player.jumpToItem(atIndex: trackIndex, playWhenReady: false)
+        try? player.jumpToItem(atIndex: trackIndex, playWhenReady: true)
         
         
         resolve(NSNull())

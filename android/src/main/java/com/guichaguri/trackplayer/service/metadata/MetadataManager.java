@@ -98,6 +98,7 @@ public class MetadataManager {
 
     private void initDefaultNotificationCapabilities() {
         actions = 0;
+        compactActions = 0;
 
         List<Long> caps = Arrays.asList(
                 PlaybackStateCompat.ACTION_PLAY,
@@ -109,6 +110,7 @@ public class MetadataManager {
         for (long cap :caps) {
             actions |= cap;
         }
+        compactActions = actions;
 
         previousAction = createAction(
                 PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS,
