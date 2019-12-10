@@ -59,7 +59,7 @@ public class MusicManager implements OnAudioFocusChangeListener {
     };
     private boolean receivingNoisyEvents = false;
 
-    private boolean stopWithApp = false;
+    private boolean stopWithApp = true;
     private boolean alwaysPauseOnInterruption = false;
 
     @SuppressLint("InvalidWakeLockTag")

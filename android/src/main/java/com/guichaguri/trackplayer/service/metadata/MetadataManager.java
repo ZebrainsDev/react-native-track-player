@@ -17,6 +17,8 @@ import androidx.media.app.NotificationCompat.MediaStyle;
 import androidx.media.session.MediaButtonReceiver;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.util.Log;
+
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.request.target.SimpleTarget;
@@ -29,6 +31,7 @@ import com.guichaguri.trackplayer.service.Utils;
 import com.guichaguri.trackplayer.service.models.Track;
 import com.guichaguri.trackplayer.service.player.ExoPlayback;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -89,6 +92,46 @@ public class MetadataManager {
 
         // Make it visible in the lockscreen
         builder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+
+        initDefaultNotificationCapabilities();
+    }
+
+    private void initDefaultNotificationCapabilities() {
+        actions = 0;
+
+        List<Long> caps = Arrays.asList(
+                PlaybackStateCompat.ACTION_PLAY,
+                PlaybackStateCompat.ACTION_PAUSE,
+                PlaybackStateCompat.ACTION_SKIP_TO_NEXT,
+                PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+        );
+
+        for (long cap :caps) {
+            actions |= cap;
+        }
+
+        previousAction = createAction(
+                PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS,
+                "Previous",
+                R.drawable.previous
+        );
+
+        playAction = createAction(
+                PlaybackStateCompat.ACTION_PLAY,
+                "Play",
+                R.drawable.play
+        );
+        pauseAction = createAction(
+                PlaybackStateCompat.ACTION_PAUSE,
+                "Pause",
+                R.drawable.pause
+        );
+
+        nextAction = createAction(
+                PlaybackStateCompat.ACTION_SKIP_TO_NEXT,
+                "Next",
+                R.drawable.next
+        );
     }
 
     public MediaSessionCompat getSession() {
@@ -152,6 +195,8 @@ public class MetadataManager {
 
         updateNotification();
     }
+
+
 
     public int getRatingType() {
         return ratingType;
@@ -231,7 +276,10 @@ public class MetadataManager {
 
         // Adds the media buttons to the notification
 
-        addAction(previousAction, PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS, compact);
+        if(playback.hasPreviousTrack()){
+            addAction(previousAction, PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS, compact);
+        }
+
         addAction(rewindAction, PlaybackStateCompat.ACTION_REWIND, compact);
 
         if(playing) {
@@ -242,7 +290,10 @@ public class MetadataManager {
 
         addAction(stopAction, PlaybackStateCompat.ACTION_STOP, compact);
         addAction(forwardAction, PlaybackStateCompat.ACTION_FAST_FORWARD, compact);
-        addAction(nextAction, PlaybackStateCompat.ACTION_SKIP_TO_NEXT, compact);
+
+        if(playback.hasNextTrack()){
+            addAction(nextAction, PlaybackStateCompat.ACTION_SKIP_TO_NEXT, compact);
+        }
 
         // Prevent the media style from being used in older Huawei devices that don't support custom styles
         if(!Build.MANUFACTURER.toLowerCase().contains("huawei") || Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -274,10 +325,13 @@ public class MetadataManager {
 
         }
 
-        // Updates the media session state
+        updateMediaSessionState(playback);
+    }
+
+    private void updateMediaSessionState(ExoPlayback playback){
         PlaybackStateCompat.Builder pb = new PlaybackStateCompat.Builder();
         pb.setActions(actions);
-        pb.setState(state, playback.getPosition(), playback.getRate());
+        pb.setState(playback.getState(), playback.getPosition(), playback.getRate());
         pb.setBufferedPosition(playback.getBufferedPosition());
 
         session.setPlaybackState(pb.build());
@@ -321,6 +375,10 @@ public class MetadataManager {
     private Action createAction(List<Integer> caps, long action, String title, int icon) {
         if(!caps.contains((int)action)) return null;
 
+        return createAction(action, title, icon);
+    }
+
+    private Action createAction(long action, String title, int icon) {
         return new Action(icon, title, MediaButtonReceiver.buildMediaButtonPendingIntent(service, action));
     }
 

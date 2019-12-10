@@ -59,6 +59,16 @@ public abstract class ExoPlayback<T extends Player> implements EventListener, Me
         return queue;
     }
 
+    public boolean hasNextTrack() {
+        int currentIndex = player.getCurrentWindowIndex();
+        return currentIndex + 1 < queue.size();
+    }
+
+    public boolean hasPreviousTrack() {
+        int currentIndex = player.getCurrentWindowIndex();
+        return currentIndex > 0;
+    }
+
     public abstract void add(Track track, int index, Promise promise);
 
     public abstract void add(Collection<Track> tracks, int index, Promise promise);
@@ -258,11 +268,7 @@ public abstract class ExoPlayback<T extends Player> implements EventListener, Me
 
             if(queueInitialized){
                 manager.onTrackUpdate(previous, lastKnownPosition, next);
-            } else {
-                manager.getMetadata().updateMetadata(next);
             }
-
-
         }
 
         lastKnownWindow = player.getCurrentWindowIndex();

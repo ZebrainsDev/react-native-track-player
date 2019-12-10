@@ -98,7 +98,15 @@ public class LocalPlayback extends ExoPlayback<SimpleExoPlayer> {
     public void initQueueWithOffset(Collection<Track> tracks, int index, Promise promise) {
         List<MediaSource> trackList = new ArrayList<>();
 
+        Track currentTrack = null;
+
+        int i = 0;
+
         for(Track track : tracks) {
+            if(i == index) {
+                currentTrack = track;
+            }
+            i++;
             trackList.add(track.toMediaSource(context, this));
         }
 
@@ -106,11 +114,13 @@ public class LocalPlayback extends ExoPlayback<SimpleExoPlayer> {
         queue.addAll(tracks);
         player.setPlayWhenReady(false);
         source.addMediaSources(trackList);
-        skip(index);
+        manager.getMetadata().updateMetadata(currentTrack);
+        if(index > 0) {
+            skip(index);
+        }
         prepare();
         player.setPlayWhenReady(true);
         promise.resolve(null);
-
     }
 
     @Override
