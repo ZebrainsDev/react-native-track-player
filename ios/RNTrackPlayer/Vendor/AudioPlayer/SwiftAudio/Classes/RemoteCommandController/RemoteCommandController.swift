@@ -14,7 +14,7 @@ public protocol RemoteCommandable {
 
 public class RemoteCommandController {
         
-    private let center: MPRemoteCommandCenter
+    public let center: MPRemoteCommandCenter
     
     weak var audioPlayer: AudioPlayer?
     

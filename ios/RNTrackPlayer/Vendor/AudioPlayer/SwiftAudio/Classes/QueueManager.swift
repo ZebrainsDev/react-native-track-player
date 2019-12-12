@@ -35,7 +35,7 @@ class QueueManager<T> {
       }
     
     public var previousItems: [T] {
-        if hasPreviousItems {
+        guard hasPreviousItems else {
             return []
         }
         return Array(_items[0..<_currentIndex])

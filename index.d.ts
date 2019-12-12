@@ -23,7 +23,8 @@ declare namespace RNTrackPlayer {
     | "remote-duck"
     | "remote-like"
     | "remote-dislike"
-    | "remote-bookmark";
+    | "remote-bookmark"
+    | "remote-progress-ended";
 
   export type TrackType = "default" | "dash" | "hls" | "smoothstreaming";
 
@@ -33,9 +34,6 @@ declare namespace RNTrackPlayer {
   type RatingType = string | number;
   type Capability = string | number;
   type PitchAlgorithm = string | number;
-
-  type EventHandler = (type: EventType, ...args: any[]) => void;
-  export function registerEventHandler(handler: EventHandler): void;
 
   type ServiceHandler = () => Promise<void>;
   export function registerPlaybackService(
@@ -142,15 +140,24 @@ declare namespace RNTrackPlayer {
 
   // Player Queue Commands
 
+  export interface SkipResult {
+    canPlayNext: boolean;
+    canPlayPrev: boolean;
+    currentTrack: string;
+  }
+
   export function add(
     tracks: Track | Track[],
     insertBeforeId?: string
   ): Promise<void>;
-  export function initQueue(tracks: Track[], trackId: string): Promise<void>;
+  export function initQueue(
+    tracks: Track[],
+    trackId: string
+  ): Promise<SkipResult>;
   export function remove(trackIds: string | string[]): Promise<void>;
-  export function skip(trackId: string): Promise<void>;
-  export function skipToNext(): Promise<void>;
-  export function skipToPrevious(): Promise<void>;
+  export function skip(trackId: string): Promise<SkipResult>;
+  export function skipToNext(): Promise<SkipResult>;
+  export function skipToPrevious(): Promise<SkipResult>;
   export function removeUpcomingTracks(): Promise<void>;
 
   // Control Center / Notification Metadata Commands

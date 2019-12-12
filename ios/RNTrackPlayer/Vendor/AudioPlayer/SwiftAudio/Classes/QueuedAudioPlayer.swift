@@ -135,30 +135,16 @@ public class QueuedAudioPlayer: AudioPlayer {
         checkForNextPrevCommands()
     }
     
-    private var nextEnabled: Bool = false
-    private var previousEnabled: Bool = false
     private func checkForNextPrevCommands () {
         if queueManager.hasNextItems {
-            if !nextEnabled {
-                enableRemoteCommands([.next], withClear: false)
-                nextEnabled = true
-            }
+            remoteCommandController.center.nextTrackCommand.isEnabled = true
         } else {
-            if nextEnabled {
-                disableRemoteCommands([.next])
-                nextEnabled = false
-            }
+            remoteCommandController.center.nextTrackCommand.isEnabled = false
         }
         if queueManager.hasPreviousItems {
-            if !previousEnabled{
-                enableRemoteCommands([.previous], withClear: false)
-                previousEnabled = true
-            }
+           remoteCommandController.center.previousTrackCommand.isEnabled = true
         } else {
-            if previousEnabled {
-                disableRemoteCommands([.previous])
-                previousEnabled = false
-            }
+            remoteCommandController.center.previousTrackCommand.isEnabled = false
         }
     }
     

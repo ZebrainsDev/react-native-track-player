@@ -92,6 +92,7 @@ public class RNTrackPlayer: RCTEventEmitter {
             "remote-like",
             "remote-dislike",
             "remote-bookmark",
+            "remote-progress-ended"
         ]
     }
     
@@ -132,6 +133,17 @@ public class RNTrackPlayer: RCTEventEmitter {
                 }
             }
         }
+    }
+    
+    private func getNextPrevProps() -> [String: Any] {
+        let canPlayPrev = self.player.queueManager.hasPreviousItems
+        let canPlayNext = self.player.queueManager.hasNextItems
+        let currentTrack = (self.player.currentItem as? Track)?.id ?? ""
+        return [
+            "canPlayNext": canPlayNext,
+            "currentTrack": currentTrack,
+            "canPlayPrev": canPlayPrev
+        ]
     }
 
     // MARK: - Bridged Methods
@@ -190,17 +202,15 @@ public class RNTrackPlayer: RCTEventEmitter {
                     "track": (self.player.currentItem as? Track)?.id,
                     "position": self.player.currentTime,
                     ])
+                self.player.seek(to: 0)
             } else if reason == .playedUntilEnd {
-               self.sendEvent(withName: "playback-track-changed", body: [
-                    "track": (self.player.currentItem as? Track)?.id,
-                    "position": self.player.currentTime,
-                    "nextTrack": (self.player.nextItems.first as? Track)?.id,
-                    ])
+                self.sendEvent(withName: "remote-progress-ended", body: self.getNextPrevProps())
             }
         }
         
         player.remoteCommandController.handleChangePlaybackPositionCommand = { [weak self] event in
             if let event = event as? MPChangePlaybackPositionCommandEvent {
+                self?.player.seek(to: event.positionTime)
                 self?.sendEvent(withName: "remote-seek", body: ["position": event.positionTime])
                 return MPRemoteCommandHandlerStatus.success
             }
@@ -209,23 +219,35 @@ public class RNTrackPlayer: RCTEventEmitter {
         }
         
         player.remoteCommandController.handleNextTrackCommand = { [weak self] _ in
-            self?.sendEvent(withName: "remote-next", body: nil)
-            return MPRemoteCommandHandlerStatus.success
+            do {
+                try self?.player.next()
+                self?.sendEvent(withName: "remote-next", body: self?.getNextPrevProps())
+                return MPRemoteCommandHandlerStatus.success
+            }  catch{
+                return MPRemoteCommandHandlerStatus.commandFailed
+            }
         }
         
         player.remoteCommandController.handlePauseCommand = { [weak self] _ in
+            self?.player.pause()
             self?.sendEvent(withName: "remote-pause", body: nil)
             return MPRemoteCommandHandlerStatus.success
         }
         
         player.remoteCommandController.handlePlayCommand = { [weak self] _ in
+            self?.player.play()
             self?.sendEvent(withName: "remote-play", body: nil)
             return MPRemoteCommandHandlerStatus.success
         }
         
         player.remoteCommandController.handlePreviousTrackCommand = { [weak self] _ in
-            self?.sendEvent(withName: "remote-previous", body: nil)
-            return MPRemoteCommandHandlerStatus.success
+            do {
+                try self?.player.previous()
+                self?.sendEvent(withName: "remote-previous", body: self?.getNextPrevProps())
+                return MPRemoteCommandHandlerStatus.success
+            }  catch{
+                return MPRemoteCommandHandlerStatus.commandFailed
+            }
         }
         
         player.remoteCommandController.handleSkipBackwardCommand = { [weak self] event in
@@ -277,6 +299,8 @@ public class RNTrackPlayer: RCTEventEmitter {
             self?.sendEvent(withName: "remote-bookmark", body: nil)
             return MPRemoteCommandHandlerStatus.success
         }
+        
+        player.enableRemoteCommands([.play, .pause, .changePlaybackPosition, .next, .previous])
         
         hasInitialized = true
         resolve(NSNull())
@@ -373,15 +397,12 @@ public class RNTrackPlayer: RCTEventEmitter {
             return
         }
         
-        print("Enabling remote commands")
-        player.enableRemoteCommands([.play, .pause, .changePlaybackPosition], withClear: false)
-        
 
         print("Head to track:", trackId)
         try? player.jumpToItem(atIndex: trackIndex, playWhenReady: true)
         
         
-        resolve(NSNull())
+        resolve(getNextPrevProps())
     }
     
     @objc(remove:resolver:rejecter:)
@@ -426,7 +447,7 @@ public class RNTrackPlayer: RCTEventEmitter {
         
         print("Skipping to track:", trackId)
         try? player.jumpToItem(atIndex: trackIndex, playWhenReady: player.playerState == .playing)
-        resolve(NSNull())
+        resolve(getNextPrevProps())
     }
     
     @objc(skipToNext:rejecter:)
@@ -439,7 +460,7 @@ public class RNTrackPlayer: RCTEventEmitter {
                 "nextTrack": (player.nextItems.first as? Track)?.id,
             ])
             try player.next()
-            resolve(NSNull())
+            resolve(getNextPrevProps())
         } catch (_) {
             reject("queue_exhausted", "There is no tracks left to play", nil)
         }
@@ -455,7 +476,7 @@ public class RNTrackPlayer: RCTEventEmitter {
                 "nextTrack": (player.previousItems.last as? Track)?.id,
             ])
             try player.previous()
-            resolve(NSNull())
+            resolve(getNextPrevProps())
         } catch (_) {
             reject("no_previous_track", "There is no previous track", nil)
         }
