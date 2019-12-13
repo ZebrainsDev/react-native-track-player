@@ -95,7 +95,7 @@ public class LocalPlayback extends ExoPlayback<SimpleExoPlayer> {
     }
 
     @Override
-    public void initQueueWithOffset(Collection<Track> tracks, int index, Promise promise) {
+    public void initQueueWithOffset(Collection<Track> tracks, int index) {
         List<MediaSource> trackList = new ArrayList<>();
 
         Track currentTrack = null;
@@ -120,7 +120,6 @@ public class LocalPlayback extends ExoPlayback<SimpleExoPlayer> {
         }
         prepare();
         player.setPlayWhenReady(true);
-        promise.resolve(null);
     }
 
     @Override

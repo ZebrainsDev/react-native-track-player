@@ -1,9 +1,14 @@
 package com.guichaguri.trackplayer.service.player;
 
 import android.content.Context;
+import android.os.Bundle;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
+
+import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
+import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.WritableMap;
 import com.google.android.exoplayer2.*;
 import com.google.android.exoplayer2.Player.EventListener;
 import com.google.android.exoplayer2.Timeline.Window;
@@ -69,11 +74,40 @@ public abstract class ExoPlayback<T extends Player> implements EventListener, Me
         return currentIndex > 0;
     }
 
+    public ReadableMap getSkipOptions(){
+        WritableMap map = Arguments.createMap();
+        map.putBoolean("canPlayNext", hasNextTrack());
+        map.putBoolean("canPlayPrev", hasPreviousTrack());
+
+        Track currentTrack = getCurrentTrack();
+        if(currentTrack == null){
+            map.putNull("currentTrack");
+        } else {
+            map.putString("currentTrack", currentTrack.id);
+        }
+
+        return map;
+    }
+
+    public Bundle getSkipOptionsInBundle(){
+        Bundle bundle = new Bundle();
+        bundle.putBoolean("canPlayNext", hasNextTrack());
+        bundle.putBoolean("canPlayPrev", hasPreviousTrack());
+
+        Track currentTrack = getCurrentTrack();
+        if(currentTrack != null){
+            bundle.putString("currentTrack", currentTrack.id);
+        }
+
+        return bundle;
+    }
+
+
     public abstract void add(Track track, int index, Promise promise);
 
     public abstract void add(Collection<Track> tracks, int index, Promise promise);
 
-    public abstract void initQueueWithOffset(Collection<Track> tracks, int index, Promise promise);
+    public abstract void initQueueWithOffset(Collection<Track> tracks, int index);
 
     public abstract void remove(List<Integer> indexes, Promise promise);
 
@@ -93,45 +127,39 @@ public abstract class ExoPlayback<T extends Player> implements EventListener, Me
         return index < 0 || index >= queue.size() ? null : queue.get(index);
     }
 
-    public void skip(String id, Promise promise) {
+    public void skip(String id) throws PlaybackException {
         if(id == null || id.isEmpty()) {
-            promise.reject("invalid_id", "The ID can't be null or empty");
-            return;
+            throw new PlaybackException("invalid_id", "The ID can't be null or empty");
         }
 
         for(int i = 0; i < queue.size(); i++) {
             if(id.equals(queue.get(i).id)) {
                 skip(i);
-                promise.resolve(null);
                 return;
             }
         }
 
-        promise.reject("track_not_in_queue", "Given track ID was not found in queue");
+        throw new PlaybackException("track_not_in_queue", "Given track ID was not found in queue");
     }
 
-    public void skipToPrevious(Promise promise) {
+    public void skipToPrevious() throws PlaybackException {
         int prev = player.getPreviousWindowIndex();
 
         if(prev == C.INDEX_UNSET) {
-            promise.reject("no_previous_track", "There is no previous track");
-            return;
+            throw new PlaybackException("no_previous_track", "There is no previous track");
         }
 
         skip(prev);
-        promise.resolve(null);
     }
 
-    public void skipToNext(Promise promise) {
+    public void skipToNext() throws PlaybackException  {
         int next = player.getNextWindowIndex();
 
         if(next == C.INDEX_UNSET) {
-            promise.reject("queue_exhausted", "There is no tracks left to play");
-            return;
+            throw new PlaybackException("queue_exhausted", "There is no tracks left to play");
         }
 
         skip(next);
-        promise.resolve(null);
     }
 
 
@@ -261,6 +289,8 @@ public abstract class ExoPlayback<T extends Player> implements EventListener, Me
             // Track changed because it ended
             // We'll use its duration instead of the last known position
             if (reason == Player.DISCONTINUITY_REASON_PERIOD_TRANSITION && lastKnownWindow != C.INDEX_UNSET) {
+                manager.onProgressEnd();
+
                 if (lastKnownWindow >= player.getCurrentTimeline().getWindowCount()) return;
                 long duration = player.getCurrentTimeline().getWindow(lastKnownWindow, new Window()).getDurationMs();
                 if(duration != C.TIME_UNSET) lastKnownPosition = duration;

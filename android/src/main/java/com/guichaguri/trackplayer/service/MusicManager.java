@@ -217,10 +217,20 @@ public class MusicManager implements OnAudioFocusChangeListener {
     public void onEnd(Track previous, long prevPos) {
         Log.d(Utils.LOG, "onEnd");
 
+        playback.pause();
+        playback.seekTo(0);
+
         Bundle bundle = new Bundle();
         bundle.putString("track", previous != null ? previous.id : null);
         bundle.putDouble("position", Utils.toSeconds(prevPos));
         service.emit(MusicEvents.PLAYBACK_QUEUE_ENDED, bundle);
+    }
+
+    public void onProgressEnd() {
+        Log.d(Utils.LOG, "onEndProgress");
+
+        Bundle bundle = playback.getSkipOptionsInBundle();
+        service.emit(MusicEvents.PLAYBACK_PROGRESS_ENDED, bundle);
     }
 
     public void onMetadataReceived(String source, String title, String url, String artist, String album, String date, String genre) {

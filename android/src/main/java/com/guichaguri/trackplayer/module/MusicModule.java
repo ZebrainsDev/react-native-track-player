@@ -17,6 +17,7 @@ import com.guichaguri.trackplayer.service.MusicService;
 import com.guichaguri.trackplayer.service.Utils;
 import com.guichaguri.trackplayer.service.models.Track;
 import com.guichaguri.trackplayer.service.player.ExoPlayback;
+import com.guichaguri.trackplayer.service.player.PlaybackException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -252,7 +253,8 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
             if(index == -1) {
                 callback.reject("track_not_in_queue", "Given track ID was not found in queue");
             } else {
-                binder.getPlayback().initQueueWithOffset(trackList, index, callback);
+                binder.getPlayback().initQueueWithOffset(trackList, index);
+                callback.resolve(binder.getPlayback().getSkipOptions());
             }
         });
     }
@@ -321,17 +323,38 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
 
     @ReactMethod
     public void skip(final String track, final Promise callback) {
-        waitForConnection(() -> binder.getPlayback().skip(track, callback));
+        waitForConnection(() -> {
+            try {
+                binder.getPlayback().skip(track);
+                callback.resolve(binder.getPlayback().getSkipOptions());
+            } catch (PlaybackException ex){
+                ex.reject(callback);
+            }
+        });
     }
 
     @ReactMethod
     public void skipToNext(final Promise callback) {
-        waitForConnection(() -> binder.getPlayback().skipToNext(callback));
+        waitForConnection(() -> {
+            try {
+                binder.getPlayback().skipToNext();
+                callback.resolve(binder.getPlayback().getSkipOptions());
+            } catch (PlaybackException ex){
+                ex.reject(callback);
+            }
+        });
     }
 
     @ReactMethod
     public void skipToPrevious(final Promise callback) {
-        waitForConnection(() -> binder.getPlayback().skipToPrevious(callback));
+        waitForConnection(() -> {
+            try {
+                binder.getPlayback().skipToPrevious();
+                callback.resolve(binder.getPlayback().getSkipOptions());
+            } catch (PlaybackException ex){
+                ex.reject(callback);
+            }
+        });
     }
 
     @ReactMethod

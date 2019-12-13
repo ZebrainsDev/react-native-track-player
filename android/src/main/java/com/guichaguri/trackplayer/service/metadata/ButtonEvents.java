@@ -5,11 +5,16 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.media.RatingCompat;
 import android.support.v4.media.session.MediaSessionCompat;
+
+import com.facebook.react.bridge.ReadableMap;
 import com.guichaguri.trackplayer.module.MusicEvents;
 import com.guichaguri.trackplayer.service.MusicManager;
 import com.guichaguri.trackplayer.service.MusicService;
 import com.guichaguri.trackplayer.service.Utils;
 import com.guichaguri.trackplayer.service.models.Track;
+import com.guichaguri.trackplayer.service.player.ExoPlayback;
+import com.guichaguri.trackplayer.service.player.PlaybackException;
+
 import java.util.List;
 
 /**
@@ -27,16 +32,19 @@ public class ButtonEvents extends MediaSessionCompat.Callback {
 
     @Override
     public void onPlay() {
+        manager.getPlayback().play();
         service.emit(MusicEvents.BUTTON_PLAY, null);
     }
 
     @Override
     public void onPause() {
+        manager.getPlayback().pause();
         service.emit(MusicEvents.BUTTON_PAUSE, null);
     }
 
     @Override
     public void onStop() {
+        manager.getPlayback().stop();
         service.emit(MusicEvents.BUTTON_STOP, null);
     }
 
@@ -90,24 +98,43 @@ public class ButtonEvents extends MediaSessionCompat.Callback {
     public void onSkipToQueueItem(long id) {
         List<Track> tracks = manager.getPlayback().getQueue();
 
+
         for(Track track : tracks) {
             if(track.queueId != id) continue;
 
-            Bundle bundle = new Bundle();
-            bundle.putString("id", track.id);
-            service.emit(MusicEvents.BUTTON_SKIP, bundle);
+            try {
+                ExoPlayback playback =  manager.getPlayback();
+                playback.skip(track.id);
+                Bundle bundle = playback.getSkipOptionsInBundle();
+                service.emit(MusicEvents.BUTTON_SKIP, bundle);
+            } catch (PlaybackException ignored){
+            }
+
             break;
         }
     }
 
     @Override
     public void onSkipToPrevious() {
-        service.emit(MusicEvents.BUTTON_SKIP_PREVIOUS, null);
+        try {
+            ExoPlayback playback =  manager.getPlayback();
+            playback.skipToPrevious();
+            Bundle bundle = playback.getSkipOptionsInBundle();
+            service.emit(MusicEvents.BUTTON_SKIP_PREVIOUS, bundle);
+        } catch (PlaybackException ignored){
+        }
+
     }
 
     @Override
     public void onSkipToNext() {
-        service.emit(MusicEvents.BUTTON_SKIP_NEXT, null);
+        try {
+            ExoPlayback playback =  manager.getPlayback();
+            playback.skipToNext();
+            Bundle bundle = playback.getSkipOptionsInBundle();
+            service.emit(MusicEvents.BUTTON_SKIP_NEXT, bundle);
+        } catch (PlaybackException ignored){
+        }
     }
 
     @Override
@@ -126,6 +153,9 @@ public class ButtonEvents extends MediaSessionCompat.Callback {
 
     @Override
     public void onSeekTo(long pos) {
+        ExoPlayback playback =  manager.getPlayback();
+        playback.seekTo(pos);
+
         Bundle bundle = new Bundle();
         bundle.putDouble("position", Utils.toSeconds(pos));
         service.emit(MusicEvents.BUTTON_SEEK_TO, bundle);

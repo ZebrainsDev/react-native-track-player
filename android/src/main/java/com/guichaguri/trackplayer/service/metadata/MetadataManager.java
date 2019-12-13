@@ -103,6 +103,7 @@ public class MetadataManager {
         List<Long> caps = Arrays.asList(
                 PlaybackStateCompat.ACTION_PLAY,
                 PlaybackStateCompat.ACTION_PAUSE,
+                PlaybackStateCompat.ACTION_SEEK_TO,
                 PlaybackStateCompat.ACTION_SKIP_TO_NEXT,
                 PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
         );
