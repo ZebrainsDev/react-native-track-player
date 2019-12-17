@@ -119,20 +119,23 @@ public class QueuedAudioPlayer: AudioPlayer {
      - throws: `APError`
      */
     public func next() throws {
-        event.playbackEnd.emit(data: .skippedToNext)
+
         let nextItem = try queueManager.next()
         try self.load(item: nextItem, playWhenReady: true)
         checkForNextPrevCommands()
+        
+        event.playbackEnd.emit(data: (.skippedToNext, queueManager.hasNextItems))
     }
     
     /**
      Step to the previous item in the queue.
      */
     public func previous() throws {
-        event.playbackEnd.emit(data: .skippedToPrevious)
         let previousItem = try queueManager.previous()
         try self.load(item: previousItem, playWhenReady: true)
         checkForNextPrevCommands()
+        
+        event.playbackEnd.emit(data: (.skippedToPrevious, queueManager.hasNextItems))
     }
     
     private func checkForNextPrevCommands () {
@@ -166,10 +169,11 @@ public class QueuedAudioPlayer: AudioPlayer {
      - throws: `APError`
      */
     public func jumpToItem(atIndex index: Int, playWhenReady: Bool = true) throws {
-        event.playbackEnd.emit(data: .jumpedToIndex)
         let item = try queueManager.jump(to: index)
         try self.load(item: item, playWhenReady: playWhenReady)
         checkForNextPrevCommands()
+        
+        event.playbackEnd.emit(data: (.jumpedToIndex, queueManager.hasNextItems))
     }
     
     /**
@@ -200,8 +204,10 @@ public class QueuedAudioPlayer: AudioPlayer {
     // MARK: - AVPlayerWrapperDelegate
     
     override func AVWrapperItemDidPlayToEndTime() {
-        super.AVWrapperItemDidPlayToEndTime()
-        if automaticallyPlayNextSong {
+//        super.AVWrapperItemDidPlayToEndTime()
+        let canPlayNext = queueManager.hasNextItems
+        event.playbackEnd.emit(data: (.playedUntilEnd, canPlayNext))
+        if canPlayNext && automaticallyPlayNextSong {
             try? self.next()
         }
     }
