@@ -125,9 +125,17 @@ public class MusicService extends HeadlessJsTaskService {
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
+        new CountDownTimer(1000, 1000) {
 
-        if (manager == null || manager.shouldStopWithApp()) {
-            stopSelf();
-        }
+            public void onTick(long millisUntilFinished) {
+            }
+
+            public void onFinish() {
+
+                if (manager == null || manager.shouldStopWithApp()) {
+                    stopSelf();
+                }
+            }
+        }.start();
     }
 }
